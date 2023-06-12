@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="36fb970c-9bee-4a1c-8bbd-5f5935a2bb71" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="d5ecddad-691b-4ed6-afe3-14e7c2c530bc" >
+		<http:listener-connection host="0.0.0.0" port="8080" />
+	</http:listener-config>
+	<flow name="enc_decFlow" doc:id="fc2d3252-feaa-4065-a0e2-c607e0e418fa" >
+		<http:listener doc:name="Listener" doc:id="f219be54-9499-45f3-b34b-f4924929ca70" config-ref="HTTP_Listener_config" path="/encdec"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="ce64e36b-114d-4bc0-b078-a37fd4b30d38" class="enc_dec.Encrypt_Decrypt" method="Encrypt(java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0:payload.msg
+}]]]></java:args>
+		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="02c3c792-7aa5-461b-9dd9-5662f37716d1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "EncryptedMessage" : payload[0],
+    "PrivateKey":payload[1]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="enc_decFlow1" doc:id="85930a99-a7f5-4134-bf78-f50b999a67aa" >
+		<http:listener doc:name="Listener" doc:id="09d593b8-ec04-49e8-8eb9-23ef389ffe39" config-ref="HTTP_Listener_config1" path="/dec"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="97890e43-ff3e-4131-9ea3-b6d64e11260c" class="enc_dec.Decrypt" method="Decrypt(java.lang.String,java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0:payload.msg , arg1:payload.key
+}]]]></java:args>
+		</java:invoke-static>
+	</flow>
+</mule>
